@@ -2,6 +2,7 @@ package main
 
 import (
 	"calculator/calculator/calculatorpb"
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +11,14 @@ import (
 )
 
 type server struct{}
+
+func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
+	log.Println("sum called...")
+	resp := &calculatorpb.SumResponse{
+		Result: req.GetNumber1() + req.GetNumber2(),
+	}
+	return resp, nil
+}
 
 func main() {
 	lis, err := net.Listen("tcp", "0.0.0.0:5000")
