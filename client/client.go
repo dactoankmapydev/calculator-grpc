@@ -2,6 +2,7 @@ package main
 
 import (
 	"calculator/calculator/calculatorpb"
+	"context"
 	"log"
 
 	"google.golang.org/grpc"
@@ -15,5 +16,17 @@ func main() {
 	defer cc.Close()
 
 	client := calculatorpb.NewCalculatorServiceClient(cc)
-	log.Printf("service client %f", client)
+	callSum(client)
+}
+
+func callSum(c calculatorpb.CalculatorServiceClient) {
+	log.Println("calling sum api")
+	resp, err := c.Sum(context.Background(), &calculatorpb.SumRequest{
+		Number1: 5,
+		Number2: 9,
+	})
+	if err != nil {
+		log.Fatalf("call sum api err %v", err)
+	}
+	log.Printf("sum api response %v\n", resp.GetResult())
 }
