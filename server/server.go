@@ -4,6 +4,7 @@ import (
 	"calculator/calculator/calculatorpb"
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 
@@ -14,6 +15,7 @@ type server struct{}
 
 func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
 	log.Println("sum called...")
+	log.Printf("receive request %v and %v", req.GetNumber1(), req.GetNumber2())
 	resp := &calculatorpb.SumResponse{
 		Result: req.GetNumber1() + req.GetNumber2(),
 	}
@@ -24,6 +26,7 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PNDRequest, stream cal
 	log.Println("PrimeNumberDecomposition called...")
 	k := int32(2)
 	number := req.GetNumber()
+	log.Printf("receive request %v", number)
 	for number > 1 {
 		if number%k == 0 {
 			number = number / k
@@ -38,6 +41,29 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PNDRequest, stream cal
 		}
 	}
 	return nil
+}
+
+func (*server) Average(stream calculatorpb.CalculatorService_AverageServer) error {
+	log.Println("Average called...")
+	var total float32
+	var count int
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			resp := &calculatorpb.AverageResponse{
+				Result: total / float32(count),
+			}
+
+			return stream.SendAndClose(resp)
+		}
+		if err != nil {
+			log.Fatalf("err while receive average %v", err)
+			return err
+		}
+		log.Printf("receive request %v", req)
+		total += req.GetNumber()
+		count++
+	}
 }
 
 func main() {
