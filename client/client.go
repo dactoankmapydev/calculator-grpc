@@ -7,6 +7,8 @@ import (
 	"log"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -17,28 +19,36 @@ func main() {
 	defer cc.Close()
 
 	client := calculatorpb.NewCalculatorServiceClient(cc)
-	callSum(client)
-	callPND(client)
+	callSum(client, 1, 10)
+	callPND(client, 10)
 	callAverage(client)
 	callFindMax(client)
 }
 
-func callSum(c calculatorpb.CalculatorServiceClient) {
+func callSum(c calculatorpb.CalculatorServiceClient, num1, num2 int32) {
 	log.Println("calling sum api")
 	resp, err := c.Sum(context.Background(), &calculatorpb.SumRequest{
-		Number1: 5,
-		Number2: 9,
+		Number1: num1,
+		Number2: num2,
 	})
 	if err != nil {
-		log.Fatalf("call sum api err %v", err)
+		log.Printf("call sum api err %v", err)
+		if errStatus, ok := status.FromError(err); ok {
+			log.Printf("err msg: %v\n", errStatus.Message())
+			log.Printf("err code: %v\n", errStatus.Code())
+			if errStatus.Code() == codes.InvalidArgument {
+				log.Printf("invalid argument num %v, %v", num1, num2)
+				return
+			}
+		}
 	}
 	log.Printf("sum api response %v\n", resp.GetResult())
 }
 
-func callPND(c calculatorpb.CalculatorServiceClient) {
+func callPND(c calculatorpb.CalculatorServiceClient, num int32) {
 	log.Println("calling pnd api")
 	stream, err := c.PrimeNumberDecomposition(context.Background(), &calculatorpb.PNDRequest{
-		Number: 400,
+		Number: num,
 	})
 
 	if err != nil {
