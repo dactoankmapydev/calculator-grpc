@@ -5,6 +5,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -20,6 +21,7 @@ func main() {
 
 	client := calculatorpb.NewCalculatorServiceClient(cc)
 	callSum(client, 1, 10)
+	callSumWithDeadline(client, 1*time.Second, 1, 2)
 	callPND(client, 10)
 	callAverage(client)
 	callFindMax(client)
@@ -43,6 +45,33 @@ func callSum(c calculatorpb.CalculatorServiceClient, num1, num2 int32) {
 		}
 	}
 	log.Printf("sum api response %v\n", resp.GetResult())
+}
+
+func callSumWithDeadline(c calculatorpb.CalculatorServiceClient, timeout time.Duration, num1, num2 int32) {
+	log.Println("calling sum with deadline api")
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	resp, err := c.SumWithDeadline(ctx, &calculatorpb.SumRequest{
+		Number1: num1,
+		Number2: num2,
+	})
+
+	if err != nil {
+		if statusErr, ok := status.FromError(err); ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				log.Println("calling sum with deadline DeadlineExceeded")
+			} else {
+				log.Printf("call sum with deadline api err %v", err)
+			}
+		} else {
+			log.Fatalf("call sum with deadline unknown err %v", err)
+		}
+		return
+	}
+
+	log.Printf("sum with deadline api response %v\n", resp.GetResult())
 }
 
 func callPND(c calculatorpb.CalculatorServiceClient, num int32) {

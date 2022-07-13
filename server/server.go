@@ -7,8 +7,11 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type server struct{}
@@ -16,6 +19,23 @@ type server struct{}
 func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
 	log.Println("sum called...")
 	log.Printf("receive request %v and %v", req.GetNumber1(), req.GetNumber2())
+	resp := &calculatorpb.SumResponse{
+		Result: req.GetNumber1() + req.GetNumber2(),
+	}
+	return resp, nil
+}
+
+func (*server) SumWithDeadline(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
+	log.Println("sum with deadline called...")
+	log.Printf("receive request %v and %v", req.GetNumber1(), req.GetNumber2())
+
+	for i := 0; i < 3; i++ {
+		if ctx.Err() == context.Canceled {
+			log.Println("context.Canceled...")
+			return nil, status.Error(codes.Canceled, "client canceled req")
+		}
+		time.Sleep(1 * time.Second)
+	}
 	resp := &calculatorpb.SumResponse{
 		Result: req.GetNumber1() + req.GetNumber2(),
 	}
