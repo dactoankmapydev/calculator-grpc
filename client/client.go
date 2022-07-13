@@ -20,6 +20,7 @@ func main() {
 	callSum(client)
 	callPND(client)
 	callAverage(client)
+	callFindMax(client)
 }
 
 func callSum(c calculatorpb.CalculatorServiceClient) {
@@ -95,4 +96,65 @@ func callAverage(c calculatorpb.CalculatorServiceClient) {
 	}
 
 	log.Printf("average response %v", resp)
+}
+
+func callFindMax(c calculatorpb.CalculatorServiceClient) {
+	log.Println("calling find max api")
+	stream, err := c.FindMax(context.Background())
+	if err != nil {
+		log.Fatalf("call find max err %v", err)
+	}
+
+	waitc := make(chan struct{})
+
+	go func() {
+		// send many requests
+		listReq := []calculatorpb.FindMaxRequest{
+			{
+				Number: 5,
+			},
+			{
+				Number: 10,
+			},
+			{
+				Number: 15,
+			},
+			{
+				Number: 2,
+			},
+			{
+				Number: 7,
+			},
+		}
+		for _, req := range listReq {
+			err := stream.Send(&req)
+			if err != nil {
+				log.Fatalf("send finmax request err %v", err)
+				break
+			}
+		}
+		// client finish
+		stream.CloseSend()
+	}()
+
+	go func() {
+		// receive many requests
+		for {
+			resp, err := stream.Recv()
+
+			// server finish
+			if err == io.EOF {
+				log.Println("ending find max api")
+				break
+			}
+			if err != nil {
+				log.Fatalf("receive find max err %v", err)
+				break
+			}
+			log.Printf("max: %v\n", resp.GetMax())
+		}
+		close(waitc)
+	}()
+
+	<-waitc
 }
