@@ -1,7 +1,7 @@
 package main
 
 import (
-	"calculator/calculator/calculatorpb"
+	"calculator/pb"
 	"context"
 	"io"
 	"log"
@@ -19,7 +19,7 @@ func main() {
 	}
 	defer cc.Close()
 
-	client := calculatorpb.NewCalculatorServiceClient(cc)
+	client := pb.NewCalculatorServiceClient(cc)
 	callSum(client, 1, 10)
 	callSumWithDeadline(client, 1*time.Second, 1, 2)
 	callPND(client, 10)
@@ -27,9 +27,9 @@ func main() {
 	callFindMax(client)
 }
 
-func callSum(c calculatorpb.CalculatorServiceClient, num1, num2 int32) {
+func callSum(c pb.CalculatorServiceClient, num1, num2 int32) {
 	log.Println("calling sum api")
-	resp, err := c.Sum(context.Background(), &calculatorpb.SumRequest{
+	resp, err := c.Sum(context.Background(), &pb.SumRequest{
 		Number1: num1,
 		Number2: num2,
 	})
@@ -47,13 +47,13 @@ func callSum(c calculatorpb.CalculatorServiceClient, num1, num2 int32) {
 	log.Printf("sum api response %v\n", resp.GetResult())
 }
 
-func callSumWithDeadline(c calculatorpb.CalculatorServiceClient, timeout time.Duration, num1, num2 int32) {
+func callSumWithDeadline(c pb.CalculatorServiceClient, timeout time.Duration, num1, num2 int32) {
 	log.Println("calling sum with deadline api")
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	resp, err := c.SumWithDeadline(ctx, &calculatorpb.SumRequest{
+	resp, err := c.SumWithDeadline(ctx, &pb.SumRequest{
 		Number1: num1,
 		Number2: num2,
 	})
@@ -74,9 +74,9 @@ func callSumWithDeadline(c calculatorpb.CalculatorServiceClient, timeout time.Du
 	log.Printf("sum with deadline api response %v\n", resp.GetResult())
 }
 
-func callPND(c calculatorpb.CalculatorServiceClient, num int32) {
+func callPND(c pb.CalculatorServiceClient, num int32) {
 	log.Println("calling pnd api")
-	stream, err := c.PrimeNumberDecomposition(context.Background(), &calculatorpb.PNDRequest{
+	stream, err := c.PrimeNumberDecomposition(context.Background(), &pb.PNDRequest{
 		Number: num,
 	})
 
@@ -97,14 +97,14 @@ func callPND(c calculatorpb.CalculatorServiceClient, num int32) {
 	}
 }
 
-func callAverage(c calculatorpb.CalculatorServiceClient) {
+func callAverage(c pb.CalculatorServiceClient) {
 	log.Println("calling average api")
 	stream, err := c.Average(context.Background())
 	if err != nil {
 		log.Fatalf("call average err %v", err)
 	}
 
-	listReq := []calculatorpb.AverageRequest{
+	listReq := []pb.AverageRequest{
 		{
 			Number: 5,
 		},
@@ -137,7 +137,7 @@ func callAverage(c calculatorpb.CalculatorServiceClient) {
 	log.Printf("average response %v", resp)
 }
 
-func callFindMax(c calculatorpb.CalculatorServiceClient) {
+func callFindMax(c pb.CalculatorServiceClient) {
 	log.Println("calling find max api")
 	stream, err := c.FindMax(context.Background())
 	if err != nil {
@@ -148,7 +148,7 @@ func callFindMax(c calculatorpb.CalculatorServiceClient) {
 
 	go func() {
 		// send many requests
-		listReq := []calculatorpb.FindMaxRequest{
+		listReq := []pb.FindMaxRequest{
 			{
 				Number: 5,
 			},

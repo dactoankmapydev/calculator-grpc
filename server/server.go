@@ -1,7 +1,7 @@
 package main
 
 import (
-	"calculator/calculator/calculatorpb"
+	"calculator/pb"
 	"context"
 	"fmt"
 	"io"
@@ -14,18 +14,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type server struct{}
+type server struct {
+	pb.UnimplementedCalculatorServiceServer
+}
 
-func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
+func (*server) Sum(ctx context.Context, req *pb.SumRequest) (*pb.SumResponse, error) {
 	log.Println("sum called...")
 	log.Printf("receive request %v and %v", req.GetNumber1(), req.GetNumber2())
-	resp := &calculatorpb.SumResponse{
+	resp := &pb.SumResponse{
 		Result: req.GetNumber1() + req.GetNumber2(),
 	}
 	return resp, nil
 }
 
-func (*server) SumWithDeadline(ctx context.Context, req *calculatorpb.SumRequest) (*calculatorpb.SumResponse, error) {
+func (*server) SumWithDeadline(ctx context.Context, req *pb.SumRequest) (*pb.SumResponse, error) {
 	log.Println("sum with deadline called...")
 	log.Printf("receive request %v and %v", req.GetNumber1(), req.GetNumber2())
 
@@ -36,13 +38,13 @@ func (*server) SumWithDeadline(ctx context.Context, req *calculatorpb.SumRequest
 		}
 		time.Sleep(1 * time.Second)
 	}
-	resp := &calculatorpb.SumResponse{
+	resp := &pb.SumResponse{
 		Result: req.GetNumber1() + req.GetNumber2(),
 	}
 	return resp, nil
 }
 
-func (*server) PrimeNumberDecomposition(req *calculatorpb.PNDRequest, stream calculatorpb.CalculatorService_PrimeNumberDecompositionServer) error {
+func (*server) PrimeNumberDecomposition(req *pb.PNDRequest, stream pb.CalculatorService_PrimeNumberDecompositionServer) error {
 	log.Println("PrimeNumberDecomposition called...")
 	k := int32(2)
 	number := req.GetNumber()
@@ -52,7 +54,7 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PNDRequest, stream cal
 			number = number / k
 
 			// send to client
-			stream.Send(&calculatorpb.PNDResponse{
+			stream.Send(&pb.PNDResponse{
 				Result: k,
 			})
 		} else {
@@ -63,14 +65,14 @@ func (*server) PrimeNumberDecomposition(req *calculatorpb.PNDRequest, stream cal
 	return nil
 }
 
-func (*server) Average(stream calculatorpb.CalculatorService_AverageServer) error {
+func (*server) Average(stream pb.CalculatorService_AverageServer) error {
 	log.Println("Average called...")
 	var total float32
 	var count int
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
-			resp := &calculatorpb.AverageResponse{
+			resp := &pb.AverageResponse{
 				Result: total / float32(count),
 			}
 
@@ -86,7 +88,7 @@ func (*server) Average(stream calculatorpb.CalculatorService_AverageServer) erro
 	}
 }
 
-func (*server) FindMax(stream calculatorpb.CalculatorService_FindMaxServer) error {
+func (*server) FindMax(stream pb.CalculatorService_FindMaxServer) error {
 	log.Println("Find max called...")
 	max := int32(0)
 	for {
@@ -108,7 +110,7 @@ func (*server) FindMax(stream calculatorpb.CalculatorService_FindMaxServer) erro
 		}
 
 		// send to client
-		err = stream.Send(&calculatorpb.FindMaxResponse{
+		err = stream.Send(&pb.FindMaxResponse{
 			Max: max,
 		})
 		if err != nil {
@@ -126,7 +128,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	calculatorpb.RegisterCalculatorServiceServer(s, &server{})
+	pb.RegisterCalculatorServiceServer(s, &server{})
 
 	fmt.Println("calculator is running...")
 	err = s.Serve(lis)
