@@ -1,5 +1,38 @@
 # calculator-grpc
 
+- Structure
+```
+.
+├── client
+│   └── client.go
+├── go.mod
+├── go.sum
+├── Makefile
+├── pb
+│   ├── calculator.pb.go
+│   ├── service_calculator_grpc.pb.go
+│   ├── service_calculator.pb.go
+│   └── service_calculator.pb.gw.go
+├── proto
+│   ├── calculator.proto
+│   ├── google
+│   │   ├── api
+│   │   │   ├── annotations.proto
+│   │   │   ├── field_behavior.proto
+│   │   │   ├── httpbody.proto
+│   │   │   └── http.proto
+│   │   └── rpc
+│   │       ├── code.proto
+│   │       ├── error_details.proto
+│   │       └── status.proto
+│   └── service_calculator.proto
+├── proxy
+│   └── proxy.go
+├── server
+│   └── server.go
+└── tools.go
+```
+
 - Service
 ```
 service CalculatorService {
